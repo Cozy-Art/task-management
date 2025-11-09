@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 
 export default function Home() {
@@ -75,30 +76,43 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <Link
+            href="/planning"
+            className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <h2 className="text-xl font-semibold mb-2">📅 Daily Planning</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-3">
               Select 1-6 projects and set percentage allocations for your day
             </p>
-          </div>
+            <p className="text-sm text-primary font-medium">Start Planning →</p>
+          </Link>
 
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="rounded-lg border bg-card p-6 shadow-sm opacity-60">
             <h2 className="text-xl font-semibold mb-2">📊 Multi-Row Kanban</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-3">
               Visualize tasks across Putting Off, Strategy, and Timely columns
             </p>
+            <p className="text-sm text-muted-foreground">Coming soon...</p>
           </div>
 
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="rounded-lg border bg-card p-6 shadow-sm opacity-60">
             <h2 className="text-xl font-semibold mb-2">⏱️ Time Tracking</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-3">
               Track time spent on tasks with integrated timers
             </p>
+            <p className="text-sm text-muted-foreground">Coming soon...</p>
           </div>
         </div>
 
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Next up: Building the daily planning interface! 🚀</p>
+        <div className="mt-8 text-center">
+          {projects && projects.length > 0 && (
+            <Link
+              href="/planning"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              Get Started with Daily Planning →
+            </Link>
+          )}
         </div>
       </div>
     </main>

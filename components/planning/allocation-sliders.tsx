@@ -64,9 +64,9 @@ export function AllocationSliders({
                   step="5"
                   value={percentage}
                   onChange={(e) => onAllocationChange(projectId, Number(e.target.value))}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-secondary"
+                  className="w-full h-3 rounded-lg appearance-none cursor-pointer slider-custom"
                   style={{
-                    background: `linear-gradient(to right, ${project.color} 0%, ${project.color} ${percentage}%, hsl(var(--secondary)) ${percentage}%, hsl(var(--secondary)) 100%)`,
+                    background: `linear-gradient(to right, ${project.color} 0%, ${project.color} ${percentage}%, hsl(var(--muted)) ${percentage}%, hsl(var(--muted)) 100%)`,
                   }}
                   aria-label={`Allocate percentage for ${project.name}`}
                   aria-valuemin={0}

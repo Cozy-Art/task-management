@@ -85,3 +85,53 @@
 *:focus-visible {
   @apply outline-2 outline-offset-2 outline-ring;
 }
+
+/* Custom Range Slider Styles */
+.slider-custom {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Webkit (Chrome, Safari, Edge) Thumb */
+.slider-custom::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.slider-custom::-webkit-slider-thumb:hover {
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox Thumb */
+.slider-custom::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.slider-custom::-moz-range-thumb:hover {
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Track (for Firefox) */
+.slider-custom::-moz-range-track {
+  height: 12px;
+  border-radius: 6px;
+}

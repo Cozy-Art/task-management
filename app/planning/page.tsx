@@ -136,10 +136,20 @@ export default function PlanningPage() {
           >
             ← Back to Home
           </Link>
-          <h1 className="text-4xl font-bold mb-2">📅 Daily Planning</h1>
-          <p className="text-muted-foreground">
-            Select 1-6 projects and allocate your time for today
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">📅 Daily Planning</h1>
+              <p className="text-muted-foreground">
+                Select 1-6 projects and allocate your time for today
+              </p>
+            </div>
+            <Link
+              href="/kanban"
+              className="hidden md:inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              📊 Kanban Board
+            </Link>
+          </div>
         </div>
 
         {/* Work Hours Selector */}

@@ -87,13 +87,16 @@ export default function Home() {
             <p className="text-sm text-primary font-medium">Start Planning →</p>
           </Link>
 
-          <div className="rounded-lg border bg-card p-6 shadow-sm opacity-60">
+          <Link
+            href="/kanban"
+            className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <h2 className="text-xl font-semibold mb-2">📊 Multi-Row Kanban</h2>
             <p className="text-sm text-muted-foreground mb-3">
               Visualize tasks across Putting Off, Strategy, and Timely columns
             </p>
-            <p className="text-sm text-muted-foreground">Coming soon...</p>
-          </div>
+            <p className="text-sm text-primary font-medium">View Board →</p>
+          </Link>
 
           <div className="rounded-lg border bg-card p-6 shadow-sm opacity-60">
             <h2 className="text-xl font-semibold mb-2">⏱️ Time Tracking</h2>

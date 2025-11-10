@@ -3,16 +3,35 @@
  * One row per project with three columns: Putting Off, Strategy, Timely
  */
 
+'use client';
+
+import { useState } from 'react';
 import { TodoistTask, TodoistProject } from '@/lib/types/todoist';
 import { Column, ColumnType } from './column';
 import { TaskCategory } from '@/lib/types/app';
+import { getTodoistColor } from '@/lib/utils/colors';
 
 interface ProjectRowProps {
   project: TodoistProject;
   tasks: TodoistTask[];
+  defaultExpanded?: boolean;
+  allocationPercentage?: number;
+  allProjects?: TodoistProject[]; // To look up parent project
 }
 
-export function ProjectRow({ project, tasks }: ProjectRowProps) {
+export function ProjectRow({
+  project,
+  tasks,
+  defaultExpanded = false,
+  allocationPercentage,
+  allProjects = []
+}: ProjectRowProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  // Find parent project if this is a sub-project
+  const parentProject = project.parent_id
+    ? allProjects.find((p) => p.id === project.parent_id)
+    : null;
   // Categorize tasks based on labels
   // For MVP, we'll use a simple categorization:
   // - Tasks with @putting-off label -> Putting Off
@@ -47,40 +66,71 @@ export function ProjectRow({ project, tasks }: ProjectRowProps) {
   const categorizedTasks = categorizeTasks(tasks);
 
   return (
-    <div className="space-y-4">
-      {/* Project Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: project.color }} />
-        <h2 className="text-2xl font-bold">{project.name}</h2>
-        <span className="text-sm text-muted-foreground">({tasks.length} tasks)</span>
-      </div>
+    <div className="rounded-lg border bg-card">
+      {/* Project Header - Clickable to expand/collapse */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors rounded-t-lg"
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: getTodoistColor(project.color) }} />
+            <div className="flex flex-col items-start">
+              <h2 className="text-2xl font-bold">{project.name}</h2>
+              {parentProject && (
+                <span className="text-xs text-muted-foreground">
+                  ↳ {parentProject.name}
+                </span>
+              )}
+            </div>
+          </div>
+          <span className="text-sm text-muted-foreground">({tasks.length} tasks)</span>
+          {allocationPercentage !== undefined && (
+            <span className="px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded">
+              {allocationPercentage}%
+            </span>
+          )}
+        </div>
+        <svg
+          className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-      {/* Three Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Column
-          id={`${project.id}-putting-off`}
-          type="putting-off"
-          title="Putting Off"
-          tasks={categorizedTasks['putting-off']}
-          color="#ef4444" // red-500
-        />
+      {/* Three Columns - Collapsible */}
+      {isExpanded && (
+        <div className="p-4 border-t">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Column
+              id={`${project.id}-putting-off`}
+              type="putting-off"
+              title="Putting Off"
+              tasks={categorizedTasks['putting-off']}
+              color="#ef4444" // red-500
+            />
 
-        <Column
-          id={`${project.id}-strategy`}
-          type="strategy"
-          title="Strategy"
-          tasks={categorizedTasks.strategy}
-          color="#3b82f6" // blue-500
-        />
+            <Column
+              id={`${project.id}-strategy`}
+              type="strategy"
+              title="Strategy"
+              tasks={categorizedTasks.strategy}
+              color="#3b82f6" // blue-500
+            />
 
-        <Column
-          id={`${project.id}-timely`}
-          type="timely"
-          title="Timely"
-          tasks={categorizedTasks.timely}
-          color="#22c55e" // green-500
-        />
-      </div>
+            <Column
+              id={`${project.id}-timely`}
+              type="timely"
+              title="Timely"
+              tasks={categorizedTasks.timely}
+              color="#22c55e" // green-500
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

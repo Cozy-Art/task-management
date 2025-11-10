@@ -6,13 +6,15 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { TodoistTask } from '@/lib/types/todoist';
-import { TaskCard } from './task-card';
+import { TaskCardWithTimer } from './task-card-with-timer';
+import { TaskCategory } from '@/lib/types/app';
 
 interface SortableTaskCardProps {
   task: TodoistTask;
+  category?: TaskCategory;
 }
 
-export function SortableTaskCard({ task }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, category }: SortableTaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: {
@@ -28,7 +30,7 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <TaskCard task={task} isDragging={isDragging} />
+      <TaskCardWithTimer task={task} category={category} isDragging={isDragging} />
     </div>
   );
 }

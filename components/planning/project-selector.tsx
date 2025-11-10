@@ -5,6 +5,7 @@
 
 import { TodoistProject } from '@/lib/types/todoist';
 import { cn } from '@/lib/utils';
+import { getTodoistColor } from '@/lib/utils/colors';
 
 interface ProjectSelectorProps {
   projects: TodoistProject[];
@@ -21,6 +22,12 @@ export function ProjectSelector({
 }: ProjectSelectorProps) {
   const isMaxSelected = selectedProjects.length >= maxProjects;
 
+  // Helper to get parent project name
+  const getParentProject = (parentId: string | undefined) => {
+    if (!parentId) return null;
+    return projects.find((p) => p.id === parentId);
+  };
+
   return (
     <div className="rounded-lg border bg-card p-6">
       <div className="flex items-center justify-between mb-4">
@@ -34,6 +41,8 @@ export function ProjectSelector({
         {projects.map((project) => {
           const isSelected = selectedProjects.includes(project.id);
           const isDisabled = !isSelected && isMaxSelected;
+          const parentProject = getParentProject(project.parent_id);
+          const isSubProject = !!project.parent_id;
 
           return (
             <button
@@ -52,16 +61,40 @@ export function ProjectSelector({
               aria-label={`${isSelected ? 'Deselect' : 'Select'} project ${project.name}`}
             >
               <div className="flex items-center gap-3">
+                {/* Show indent icon for sub-projects */}
+                {isSubProject && (
+                  <svg
+                    className="h-4 w-4 text-muted-foreground flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                )}
                 <div
                   className="h-4 w-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: project.color }}
+                  style={{ backgroundColor: getTodoistColor(project.color) }}
                   aria-hidden="true"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{project.name}</p>
-                  {project.is_favorite && (
-                    <span className="text-xs text-muted-foreground">⭐ Favorite</span>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {parentProject && (
+                      <span className="text-xs text-muted-foreground">
+                        ↳ {parentProject.name}
+                      </span>
+                    )}
+                    {project.is_favorite && (
+                      <span className="text-xs text-muted-foreground">⭐ Favorite</span>
+                    )}
+                  </div>
                 </div>
                 {isSelected && (
                   <div className="flex-shrink-0">

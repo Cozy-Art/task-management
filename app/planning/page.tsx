@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 import { ProjectSelector } from '@/components/planning/project-selector';
 import { AllocationSliders } from '@/components/planning/allocation-sliders';
-import { AllocationSummary } from '@/components/planning/allocation-summary';
 import { ProjectAllocation } from '@/lib/types/app';
 import { getToday } from '@/lib/utils';
 
@@ -169,61 +168,31 @@ export default function PlanningPage() {
           </div>
         </div>
 
-        {/* Work Hours Selector */}
-        <div className="mb-8 rounded-lg border bg-card p-6">
-          <label htmlFor="work-hours" className="block text-sm font-medium mb-2">
-            Total Work Hours Today
-          </label>
-          <input
-            id="work-hours"
-            type="number"
-            min="1"
-            max="24"
-            value={totalWorkHours}
-            onChange={(e) => setTotalWorkHours(Number(e.target.value))}
-            className="w-full md:w-48 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Typically 6-8 hours for a work day
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Project Selector */}
-          <div className="lg:col-span-2">
-            <ProjectSelector
+        <div className="space-y-6">
+          {/* Allocation Sliders with Summary */}
+          {selectedProjects.length > 0 && (
+            <AllocationSliders
               projects={projects}
               selectedProjects={selectedProjects}
-              onProjectToggle={handleProjectToggle}
-              maxProjects={6}
-            />
-
-            {/* Allocation Sliders */}
-            {selectedProjects.length > 0 && (
-              <div className="mt-6">
-                <AllocationSliders
-                  projects={projects}
-                  selectedProjects={selectedProjects}
-                  allocations={allocations}
-                  onAllocationChange={handleAllocationChange}
-                  totalWorkHours={totalWorkHours}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Summary Sidebar */}
-          <div>
-            <AllocationSummary
-              projectAllocations={getProjectAllocations()}
-              totalAllocation={totalAllocation}
+              allocations={allocations}
+              onAllocationChange={handleAllocationChange}
               totalWorkHours={totalWorkHours}
+              onWorkHoursChange={setTotalWorkHours}
+              totalAllocation={totalAllocation}
               isValid={isValid}
               onSave={handleSave}
               isSaving={isSaving}
               saveError={saveError}
             />
-          </div>
+          )}
+
+          {/* Project Selector */}
+          <ProjectSelector
+            projects={projects}
+            selectedProjects={selectedProjects}
+            onProjectToggle={handleProjectToggle}
+            maxProjects={6}
+          />
         </div>
       </div>
     </main>

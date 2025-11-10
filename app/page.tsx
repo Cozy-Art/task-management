@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
+import { getTodoistColor } from '@/lib/utils/colors';
 
 export default function Home() {
   const { data: projects, isLoading, error } = useTodoistProjects();
@@ -62,7 +63,7 @@ export default function Home() {
                       <div className="flex items-center gap-2">
                         <div
                           className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: project.color }}
+                          style={{ backgroundColor: getTodoistColor(project.color) }}
                         />
                         <h4 className="font-semibold">{project.name}</h4>
                       </div>
@@ -98,13 +99,16 @@ export default function Home() {
             <p className="text-sm text-primary font-medium">View Board →</p>
           </Link>
 
-          <div className="rounded-lg border bg-card p-6 shadow-sm opacity-60">
-            <h2 className="text-xl font-semibold mb-2">⏱️ Time Tracking</h2>
+          <Link
+            href="/admin"
+            className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <h2 className="text-xl font-semibold mb-2">⚙️ Admin Settings</h2>
             <p className="text-sm text-muted-foreground mb-3">
-              Track time spent on tasks with integrated timers
+              Customize Todoist color mappings and app settings
             </p>
-            <p className="text-sm text-muted-foreground">Coming soon...</p>
-          </div>
+            <p className="text-sm text-primary font-medium">Manage Settings →</p>
+          </Link>
         </div>
 
         <div className="mt-8 text-center">

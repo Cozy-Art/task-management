@@ -16,10 +16,22 @@ interface ProjectRowProps {
   tasks: TodoistTask[];
   defaultExpanded?: boolean;
   allocationPercentage?: number;
+  allProjects?: TodoistProject[]; // To look up parent project
 }
 
-export function ProjectRow({ project, tasks, defaultExpanded = false, allocationPercentage }: ProjectRowProps) {
+export function ProjectRow({
+  project,
+  tasks,
+  defaultExpanded = false,
+  allocationPercentage,
+  allProjects = []
+}: ProjectRowProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  // Find parent project if this is a sub-project
+  const parentProject = project.parent_id
+    ? allProjects.find((p) => p.id === project.parent_id)
+    : null;
   // Categorize tasks based on labels
   // For MVP, we'll use a simple categorization:
   // - Tasks with @putting-off label -> Putting Off
@@ -60,12 +72,21 @@ export function ProjectRow({ project, tasks, defaultExpanded = false, allocation
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors rounded-t-lg"
       >
-        <div className="flex items-center gap-3">
-          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: getTodoistColor(project.color) }} />
-          <h2 className="text-2xl font-bold">{project.name}</h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: getTodoistColor(project.color) }} />
+            <div className="flex flex-col items-start">
+              <h2 className="text-2xl font-bold">{project.name}</h2>
+              {parentProject && (
+                <span className="text-xs text-muted-foreground">
+                  ↳ {parentProject.name}
+                </span>
+              )}
+            </div>
+          </div>
           <span className="text-sm text-muted-foreground">({tasks.length} tasks)</span>
           {allocationPercentage !== undefined && (
-            <span className="ml-2 px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded">
+            <span className="px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded">
               {allocationPercentage}%
             </span>
           )}

@@ -257,6 +257,7 @@ export default function KanbanPage() {
                   tasks={projectTasks}
                   defaultExpanded={isInDailyPlan}
                   allocationPercentage={allocationPercentage}
+                  allProjects={projects}
                 />
               );
             })}

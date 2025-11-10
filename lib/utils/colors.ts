@@ -28,12 +28,32 @@ export const TODOIST_COLORS: Record<string, string> = {
 };
 
 /**
+ * Get custom color mappings from localStorage
+ */
+function getCustomColorMappings(): Record<string, string> | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const stored = localStorage.getItem('custom_color_mappings');
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get hex color from Todoist color name
- * Falls back to theme primary color if no match
+ * Checks for custom overrides in localStorage first, then falls back to defaults
  */
 export function getTodoistColor(colorName: string | null | undefined): string {
   if (!colorName) {
     return '#3b82f6'; // Default blue-500 from theme
+  }
+
+  // Check for custom mappings first
+  const customMappings = getCustomColorMappings();
+  if (customMappings && customMappings[colorName]) {
+    return customMappings[colorName];
   }
 
   return TODOIST_COLORS[colorName] || '#3b82f6';

@@ -71,6 +71,9 @@ export function AllocationSliders({
           if (!project) return null;
 
           const projectColor = getTodoistColor(project.color);
+          const parentProject = project.parent_id
+            ? projects.find((p) => p.id === project.parent_id)
+            : null;
 
           return (
             <div key={projectId} className="space-y-2">
@@ -81,9 +84,16 @@ export function AllocationSliders({
                     style={{ backgroundColor: projectColor }}
                     aria-hidden="true"
                   />
-                  <label htmlFor={`slider-${projectId}`} className="font-medium">
-                    {project.name}
-                  </label>
+                  <div className="flex flex-col">
+                    <label htmlFor={`slider-${projectId}`} className="font-medium">
+                      {project.name}
+                    </label>
+                    {parentProject && (
+                      <span className="text-xs text-muted-foreground">
+                        ↳ {parentProject.name}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-sm font-medium">
                   {percentage}% ({formatDuration(Math.round(hours * 60))})

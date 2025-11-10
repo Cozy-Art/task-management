@@ -59,29 +59,72 @@ export default function KanbanPage() {
     // Optional: Add visual feedback during drag
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     setActiveTask(null);
 
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const activeId = active.id as string;
+    const task = active.data.current?.task as TodoistTask;
 
-    if (activeId === overId) return;
+    // Check if dropped on a column (not another task)
+    const targetColumnType = over.data.current?.columnType;
 
-    setTasks((tasks) => {
-      const oldIndex = tasks.findIndex((t) => t.id === activeId);
-      const newIndex = tasks.findIndex((t) => t.id === overId);
+    if (targetColumnType && task) {
+      // Moved to a different column - update labels
+      const categoryLabels = ['@putting-off', '@strategy', '@timely'];
+      const newLabel = `@${targetColumnType}`;
 
-      if (oldIndex === -1 || newIndex === -1) return tasks;
+      // Remove all category labels and add the new one
+      const updatedLabels = [
+        ...task.labels.filter((label) => !categoryLabels.includes(label)),
+        newLabel,
+      ];
 
-      return arrayMove(tasks, oldIndex, newIndex);
-    });
+      // Optimistically update UI
+      setTasks((tasks) =>
+        tasks.map((t) => (t.id === task.id ? { ...t, labels: updatedLabels } : t))
+      );
 
-    // TODO: Update task in Todoist if moved between columns
-    // This would involve updating labels based on the column
+      // Sync with Todoist
+      try {
+        const response = await fetch('/api/todoist/update-labels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            taskId: task.id,
+            labels: updatedLabels,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update labels');
+        }
+
+        const result = await response.json();
+        console.log('Labels updated successfully:', result);
+      } catch (error) {
+        console.error('Error updating labels:', error);
+        // Revert on error
+        setTasks((tasks) => tasks.map((t) => (t.id === task.id ? task : t)));
+        alert('Failed to update task labels. Please try again.');
+      }
+    } else {
+      // Reordering within same column
+      const overId = over.id;
+      if (activeId === overId) return;
+
+      setTasks((tasks) => {
+        const oldIndex = tasks.findIndex((t) => t.id === activeId);
+        const newIndex = tasks.findIndex((t) => t.id === overId);
+
+        if (oldIndex === -1 || newIndex === -1) return tasks;
+
+        return arrayMove(tasks, oldIndex, newIndex);
+      });
+    }
   };
 
   if (projectsLoading || tasksLoading) {

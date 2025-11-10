@@ -17,9 +17,10 @@ interface ColumnProps {
   title: string;
   tasks: TodoistTask[];
   color: string;
+  projectName?: string;
 }
 
-export function Column({ id, type, title, tasks, color }: ColumnProps) {
+export function Column({ id, type, title, tasks, color, projectName }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -57,7 +58,7 @@ export function Column({ id, type, title, tasks, color }: ColumnProps) {
               <p className="text-sm text-muted-foreground">No tasks yet</p>
             </div>
           ) : (
-            tasks.map((task) => <SortableTaskCard key={task.id} task={task} category={type} />)
+            tasks.map((task) => <SortableTaskCard key={task.id} task={task} category={type} projectName={projectName} />)
           )}
         </SortableContext>
       </div>

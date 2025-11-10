@@ -1,15 +1,48 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 import { getTodoistColor } from '@/lib/utils/colors';
 
 export default function Home() {
   const { data: projects, isLoading, error } = useTodoistProjects();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 md:p-24">
       <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm">
+        {/* Logout Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </div>
+
         <h1 className="text-4xl font-bold text-center mb-4">
           Priority & Time Management System
         </h1>
@@ -55,21 +88,60 @@ export default function Home() {
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">Your Projects:</h3>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-                  {projects.map((project) => (
-                    <div
-                      key={project.id}
-                      className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: getTodoistColor(project.color) }}
-                        />
-                        <h4 className="font-semibold">{project.name}</h4>
-                      </div>
-                      {project.is_favorite && <span className="text-xs">⭐ Favorite</span>}
-                    </div>
-                  ))}
+                  {projects
+                    .filter((p) => !p.parent_id) // Only show top-level projects
+                    .map((project) => {
+                      const subProjects = projects.filter((p) => p.parent_id === project.id);
+                      return (
+                        <div key={project.id} className="space-y-2">
+                          <Link
+                            href={`/project/${project.id}`}
+                            className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-md transition-shadow block focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div
+                                  className="h-3 w-3 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: getTodoistColor(project.color) }}
+                                />
+                                <h4 className="font-semibold truncate">{project.name}</h4>
+                              </div>
+                              {subProjects.length > 0 && (
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  {subProjects.length} sub
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              {project.is_favorite && <span className="text-xs">⭐</span>}
+                              <span className="text-xs text-primary">View →</span>
+                            </div>
+                          </Link>
+
+                          {/* Sub-projects - indented */}
+                          {subProjects.length > 0 && (
+                            <div className="ml-4 space-y-1">
+                              {subProjects.map((subProject) => (
+                                <Link
+                                  key={subProject.id}
+                                  href={`/project/${subProject.id}`}
+                                  className="rounded-md border bg-background/50 p-2 shadow-sm hover:shadow transition-shadow block text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-muted-foreground">↳</div>
+                                    <div
+                                      className="h-2 w-2 rounded-full flex-shrink-0"
+                                      style={{ backgroundColor: getTodoistColor(subProject.color) }}
+                                    />
+                                    <span className="truncate">{subProject.name}</span>
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             </div>

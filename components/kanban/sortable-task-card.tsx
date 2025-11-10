@@ -12,9 +12,10 @@ import { TaskCategory } from '@/lib/types/app';
 interface SortableTaskCardProps {
   task: TodoistTask;
   category?: TaskCategory;
+  projectName?: string;
 }
 
-export function SortableTaskCard({ task, category }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, category, projectName }: SortableTaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: {
@@ -30,7 +31,7 @@ export function SortableTaskCard({ task, category }: SortableTaskCardProps) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <TaskCardWithTimer task={task} category={category} isDragging={isDragging} />
+      <TaskCardWithTimer task={task} category={category} projectName={projectName} isDragging={isDragging} />
     </div>
   );
 }

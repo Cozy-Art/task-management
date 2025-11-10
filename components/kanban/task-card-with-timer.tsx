@@ -10,20 +10,23 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TodoistTask } from '@/lib/types/todoist';
 import { useTimerContext } from '@/components/providers/timer-provider';
 import { TaskCompletionModal } from './task-completion-modal';
+import { TaskEditModal } from './task-edit-modal';
 import { cn, formatTime, getToday } from '@/lib/utils';
 import { TaskCategory } from '@/lib/types/app';
 
 interface TaskCardWithTimerProps {
   task: TodoistTask;
   category?: TaskCategory;
+  projectName?: string;
   isDragging?: boolean;
 }
 
-export function TaskCardWithTimer({ task, category, isDragging = false }: TaskCardWithTimerProps) {
+export function TaskCardWithTimer({ task, category, projectName, isDragging = false }: TaskCardWithTimerProps) {
   const queryClient = useQueryClient();
   const { isTimerActive, startTimer, stopTimer, getElapsedSeconds } = useTimerContext();
   const [elapsed, setElapsed] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const isActive = isTimerActive(task.id);
 
   // Update elapsed time
@@ -82,6 +85,11 @@ export function TaskCardWithTimer({ task, category, isDragging = false }: TaskCa
   const handleCompleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowCompletionModal(true);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowEditModal(true);
   };
 
   const handleComplete = async (durationMinutes: number, notes?: string) => {
@@ -194,21 +202,41 @@ export function TaskCardWithTimer({ task, category, isDragging = false }: TaskCa
             )}
 
             {/* Labels */}
-            {task.labels.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
-                {task.labels.slice(0, 2).map((label) => (
-                  <span
-                    key={label}
-                    className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
-                  >
-                    {label}
-                  </span>
-                ))}
-                {task.labels.length > 2 && (
-                  <span className="text-xs text-muted-foreground">+{task.labels.length - 2}</span>
-                )}
-              </div>
-            )}
+            <div className="flex gap-1 flex-wrap items-center">
+              {task.labels.length > 0 && (
+                <>
+                  {task.labels.slice(0, 2).map((label) => (
+                    <span
+                      key={label}
+                      className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                  {task.labels.length > 2 && (
+                    <span className="text-xs text-muted-foreground">+{task.labels.length - 2}</span>
+                  )}
+                </>
+              )}
+              {/* Edit button - small plus icon */}
+              <button
+                onClick={handleEditClick}
+                className="h-5 w-5 rounded-full bg-secondary hover:bg-accent transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
+                title="Edit labels and task details"
+              >
+                <svg
+                  className="h-3 w-3"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M12 4v16m8-8H4"></path>
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -243,6 +271,15 @@ export function TaskCardWithTimer({ task, category, isDragging = false }: TaskCa
           elapsedSeconds={isActive ? elapsed : 0}
           onComplete={handleComplete}
           onCancel={() => setShowCompletionModal(false)}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <TaskEditModal
+          task={task}
+          projectName={projectName || 'Unknown Project'}
+          onClose={() => setShowEditModal(false)}
         />
       )}
     </>

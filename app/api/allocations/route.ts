@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Upsert (insert or update) the allocation
-    const { data, error } = await supabase
-      .from('daily_allocations')
+    const { data, error } = await (supabase
+      .from('daily_allocations') as any)
       .upsert(
         {
           user_id: userId,
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from('daily_allocations')
+    const { data, error } = await (supabase
+      .from('daily_allocations') as any)
       .select('*')
       .eq('user_id', userId)
       .eq('date', date)

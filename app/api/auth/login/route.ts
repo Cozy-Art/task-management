@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const VALID_PASSWORD = 'tothemoon';
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { password } = body;
+
+    const VALID_PASSWORD = process.env.AUTH_PASSWORD;
+
+    if (!VALID_PASSWORD) {
+      console.error('AUTH_PASSWORD environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     if (password === VALID_PASSWORD) {
       // Create response with authentication cookie

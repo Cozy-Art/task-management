@@ -57,7 +57,7 @@ export function Column({ id, type, title, tasks, color }: ColumnProps) {
               <p className="text-sm text-muted-foreground">No tasks yet</p>
             </div>
           ) : (
-            tasks.map((task) => <SortableTaskCard key={task.id} task={task} />)
+            tasks.map((task) => <SortableTaskCard key={task.id} task={task} category={type} />)
           )}
         </SortableContext>
       </div>

@@ -20,6 +20,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 import { useTodoistTasks } from '@/lib/hooks/useTodoistTasks';
+import { useDailyAllocation } from '@/lib/hooks/useDailyAllocation';
 import { ProjectRow } from '@/components/kanban/project-row';
 import { TaskCard } from '@/components/kanban/task-card';
 import { TodoistTask } from '@/lib/types/todoist';
@@ -27,6 +28,7 @@ import { TodoistTask } from '@/lib/types/todoist';
 export default function KanbanPage() {
   const { data: projects, isLoading: projectsLoading } = useTodoistProjects();
   const { data: allTasks, isLoading: tasksLoading } = useTodoistTasks();
+  const { data: dailyAllocation, isLoading: allocationLoading } = useDailyAllocation();
 
   const [activeTask, setActiveTask] = useState<TodoistTask | null>(null);
   const [tasks, setTasks] = useState<TodoistTask[]>([]);
@@ -127,6 +129,34 @@ export default function KanbanPage() {
     }
   };
 
+  // Create allocation map for easy lookup
+  const allocationMap = new Map<string, number>();
+  dailyAllocation?.project_allocations?.forEach((allocation) => {
+    allocationMap.set(allocation.project_id, allocation.percentage);
+  });
+
+  // Sort projects: selected projects first (by percentage desc), then unselected (alphabetically)
+  const sortedProjects = projects
+    ? [...projects].sort((a, b) => {
+        const aAllocation = allocationMap.get(a.id);
+        const bAllocation = allocationMap.get(b.id);
+
+        // Both have allocations - sort by percentage descending
+        if (aAllocation !== undefined && bAllocation !== undefined) {
+          return bAllocation - aAllocation;
+        }
+
+        // Only a has allocation - a comes first
+        if (aAllocation !== undefined) return -1;
+
+        // Only b has allocation - b comes first
+        if (bAllocation !== undefined) return 1;
+
+        // Neither has allocation - sort alphabetically
+        return a.name.localeCompare(b.name);
+      })
+    : [];
+
   if (projectsLoading || tasksLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -210,14 +240,25 @@ export default function KanbanPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="space-y-12">
-            {projects.map((project) => {
+          <div className="space-y-6">
+            {sortedProjects.map((project) => {
               const projectTasks = tasks.filter((task) => task.project_id === project.id);
 
               // Only show projects with tasks (for MVP)
               if (projectTasks.length === 0) return null;
 
-              return <ProjectRow key={project.id} project={project} tasks={projectTasks} />;
+              const allocationPercentage = allocationMap.get(project.id);
+              const isInDailyPlan = allocationPercentage !== undefined;
+
+              return (
+                <ProjectRow
+                  key={project.id}
+                  project={project}
+                  tasks={projectTasks}
+                  defaultExpanded={isInDailyPlan}
+                  allocationPercentage={allocationPercentage}
+                />
+              );
             })}
 
             {tasks.filter((task) => projects.some((p) => p.id === task.project_id)).length ===

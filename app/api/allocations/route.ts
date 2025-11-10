@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       if (error.code === 'PGRST116') {
         // No allocation found for this date
-        return NextResponse.json({ allocation: null });
+        return NextResponse.json({ data: null });
       }
       console.error('Supabase error:', error);
       return NextResponse.json(
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ allocation: data });
+    return NextResponse.json({ data });
   } catch (error) {
     console.error('Error fetching allocation:', error);
     return NextResponse.json(

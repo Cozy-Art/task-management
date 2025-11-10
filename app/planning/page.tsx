@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 import { ProjectSelector } from '@/components/planning/project-selector';
 import { AllocationSliders } from '@/components/planning/allocation-sliders';
@@ -15,11 +16,13 @@ import { ProjectAllocation } from '@/lib/types/app';
 import { getToday } from '@/lib/utils';
 
 export default function PlanningPage() {
+  const router = useRouter();
   const { data: projects, isLoading, error } = useTodoistProjects();
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [allocations, setAllocations] = useState<Record<string, number>>({});
   const [totalWorkHours, setTotalWorkHours] = useState(8);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleProjectToggle = (projectId: string) => {
     if (selectedProjects.includes(projectId)) {
@@ -68,6 +71,7 @@ export default function PlanningPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError(null);
 
     const allocationData = {
       date: getToday(),
@@ -75,14 +79,27 @@ export default function PlanningPage() {
       project_allocations: getProjectAllocations(),
     };
 
-    // TODO: Save to Supabase
-    console.log('Saving allocation:', allocationData);
+    try {
+      const response = await fetch('/api/allocations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(allocationData),
+      });
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save allocation');
+      }
 
-    alert('Daily allocation saved! (Currently saved to console only)');
+      // Success! Navigate to Kanban board
+      router.push('/kanban');
+    } catch (error) {
+      console.error('Error saving allocation:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save allocation');
+      setIsSaving(false);
+    }
   };
 
   const totalAllocation = getTotalAllocation();
@@ -136,10 +153,20 @@ export default function PlanningPage() {
           >
             ← Back to Home
           </Link>
-          <h1 className="text-4xl font-bold mb-2">📅 Daily Planning</h1>
-          <p className="text-muted-foreground">
-            Select 1-6 projects and allocate your time for today
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">📅 Daily Planning</h1>
+              <p className="text-muted-foreground">
+                Select 1-6 projects and allocate your time for today
+              </p>
+            </div>
+            <Link
+              href="/kanban"
+              className="hidden md:inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              📊 Kanban Board
+            </Link>
+          </div>
         </div>
 
         {/* Work Hours Selector */}
@@ -194,6 +221,7 @@ export default function PlanningPage() {
               isValid={isValid}
               onSave={handleSave}
               isSaving={isSaving}
+              saveError={saveError}
             />
           </div>
         </div>

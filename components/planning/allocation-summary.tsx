@@ -14,6 +14,7 @@ interface AllocationSummaryProps {
   isValid: boolean;
   onSave: () => void;
   isSaving: boolean;
+  saveError?: string | null;
 }
 
 export function AllocationSummary({
@@ -23,6 +24,7 @@ export function AllocationSummary({
   isValid,
   onSave,
   isSaving,
+  saveError,
 }: AllocationSummaryProps) {
   const remainingPercentage = 100 - totalAllocation;
   const isOverAllocated = totalAllocation > 100;
@@ -135,6 +137,13 @@ export function AllocationSummary({
         <p className="text-xs text-muted-foreground mt-2 text-center">
           Adjust allocations to equal 100%
         </p>
+      )}
+
+      {saveError && (
+        <div className="mt-3 rounded-lg border border-destructive bg-destructive/10 p-3">
+          <p className="text-sm text-destructive font-medium">Error saving plan</p>
+          <p className="text-xs text-destructive/80 mt-1">{saveError}</p>
+        </div>
       )}
     </div>
   );

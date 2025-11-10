@@ -25,6 +25,7 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
   const [priority, setPriority] = useState<1 | 2 | 3 | 4>(1);
   const [dueString, setDueString] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [categoryLabel, setCategoryLabel] = useState<'@putting-off' | '@strategy' | '@timely' | null>(null);
   const [labelInput, setLabelInput] = useState('');
   const [showLabelDropdown, setShowLabelDropdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,10 +41,31 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
     { value: 1, label: 'P4', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' },
   ];
 
-  // Filter labels based on input
+  const categoryLabels = [
+    { value: '@putting-off', label: 'Putting Off', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+    { value: '@strategy', label: 'Strategy', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+    { value: '@timely', label: 'Timely', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  ] as const;
+
+  // Handle category label selection (mutually exclusive)
+  const handleCategorySelect = (category: '@putting-off' | '@strategy' | '@timely') => {
+    if (categoryLabel === category) {
+      // Deselect if clicking the same one
+      setCategoryLabel(null);
+      setSelectedLabels(selectedLabels.filter(l => !['@putting-off', '@strategy', '@timely'].includes(l)));
+    } else {
+      // Select new category and remove any existing category labels
+      setCategoryLabel(category);
+      const withoutCategories = selectedLabels.filter(l => !['@putting-off', '@strategy', '@timely'].includes(l));
+      setSelectedLabels([...withoutCategories, category]);
+    }
+  };
+
+  // Filter labels based on input (exclude category labels as they have their own section)
   const filteredLabels = allLabels?.filter(
     (label) =>
       !selectedLabels.includes(label.name) &&
+      !['@putting-off', '@strategy', '@timely'].includes(label.name) &&
       label.name.toLowerCase().includes(labelInput.toLowerCase())
   ) || [];
 
@@ -73,6 +95,10 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
 
   const removeLabel = (labelToRemove: string) => {
     setSelectedLabels(selectedLabels.filter((l) => l !== labelToRemove));
+    // If removing a category label, also clear the categoryLabel state
+    if (['@putting-off', '@strategy', '@timely'].includes(labelToRemove)) {
+      setCategoryLabel(null);
+    }
   };
 
   const handleLabelInputKeyDown = (e: React.KeyboardEvent) => {
@@ -198,6 +224,31 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
             </div>
           </div>
 
+          {/* Category (Kanban Column) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Kanban Category</label>
+            <div className="grid grid-cols-3 gap-2">
+              {categoryLabels.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => handleCategorySelect(cat.value)}
+                  className={cn(
+                    'min-h-[40px] rounded-lg border p-2 text-sm font-medium transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                    categoryLabel === cat.value
+                      ? cat.color
+                      : 'border-border bg-background hover:bg-accent'
+                  )}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Select which column this task should appear in on the Kanban board
+            </p>
+          </div>
+
           {/* Due Date */}
           <div className="space-y-2">
             <label htmlFor="due-date" className="text-sm font-medium">
@@ -223,7 +274,8 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
             </label>
 
             {/* Selected Labels */}
-            <div className="flex flex-wrap gap-2 min-h-[44px] rounded-md border bg-background p-2">
+            <div className="relative">
+              <div className="flex flex-wrap gap-2 min-h-[44px] rounded-md border bg-background p-2">
               {selectedLabels.map((label) => (
                 <span
                   key={label}
@@ -257,7 +309,7 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
             {showLabelDropdown && (labelInput || filteredLabels.length > 0) && (
               <div
                 ref={dropdownRef}
-                className="relative mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover shadow-lg"
+                className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-popover shadow-lg"
               >
                 {filteredLabels.length > 0 ? (
                   <div className="py-1">
@@ -287,9 +339,10 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
                 ) : null}
               </div>
             )}
+            </div>
 
             <p className="text-xs text-muted-foreground">
-              Press Enter to add. Use @timely, @strategy, or @putting-off for Kanban categories
+              Press Enter to add label. Category labels can be selected below.
             </p>
           </div>
 

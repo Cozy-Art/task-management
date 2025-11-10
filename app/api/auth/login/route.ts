@@ -11,9 +11,9 @@ export async function POST(request: NextRequest) {
       // Create response with authentication cookie
       const response = NextResponse.json({ success: true });
 
-      // Set HTTP-only cookie that expires in 7 days
+      // Set cookie that can be read by client-side JavaScript
       response.cookies.set('auth', 'authenticated', {
-        httpOnly: true,
+        httpOnly: false, // Allow client-side reading
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7, // 7 days

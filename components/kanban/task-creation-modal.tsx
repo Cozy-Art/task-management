@@ -5,8 +5,9 @@
  * Modal to create a new task with all Todoist fields
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTodoistLabels } from '@/lib/hooks/useTodoistLabels';
 import { cn } from '@/lib/utils';
 
 interface TaskCreationModalProps {
@@ -17,13 +18,20 @@ interface TaskCreationModalProps {
 
 export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreationModalProps) {
   const queryClient = useQueryClient();
+  const { data: allLabels } = useTodoistLabels();
+
   const [content, setContent] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<1 | 2 | 3 | 4>(1);
   const [dueString, setDueString] = useState('');
-  const [labels, setLabels] = useState('');
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [labelInput, setLabelInput] = useState('');
+  const [showLabelDropdown, setShowLabelDropdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const labelInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const priorities = [
     { value: 4, label: 'P1', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
@@ -31,6 +39,54 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
     { value: 2, label: 'P3', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     { value: 1, label: 'P4', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' },
   ];
+
+  // Filter labels based on input
+  const filteredLabels = allLabels?.filter(
+    (label) =>
+      !selectedLabels.includes(label.name) &&
+      label.name.toLowerCase().includes(labelInput.toLowerCase())
+  ) || [];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !labelInputRef.current?.contains(event.target as Node)
+      ) {
+        setShowLabelDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const addLabel = (labelName: string) => {
+    if (labelName.trim() && !selectedLabels.includes(labelName.trim())) {
+      setSelectedLabels([...selectedLabels, labelName.trim()]);
+      setLabelInput('');
+      setShowLabelDropdown(false);
+    }
+  };
+
+  const removeLabel = (labelToRemove: string) => {
+    setSelectedLabels(selectedLabels.filter((l) => l !== labelToRemove));
+  };
+
+  const handleLabelInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filteredLabels.length > 0) {
+        addLabel(filteredLabels[0].name);
+      } else if (labelInput.trim()) {
+        addLabel(labelInput);
+      }
+    } else if (e.key === 'Backspace' && labelInput === '' && selectedLabels.length > 0) {
+      removeLabel(selectedLabels[selectedLabels.length - 1]);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!content.trim()) {
@@ -42,12 +98,6 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
     setError(null);
 
     try {
-      // Parse labels (comma-separated)
-      const labelArray = labels
-        .split(',')
-        .map((l) => l.trim())
-        .filter((l) => l.length > 0);
-
       const response = await fetch('/api/todoist/create-task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,7 +107,7 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
           project_id: projectId,
           priority,
           due_string: dueString.trim() || undefined,
-          labels: labelArray.length > 0 ? labelArray : undefined,
+          labels: selectedLabels.length > 0 ? selectedLabels : undefined,
         }),
       });
 
@@ -171,16 +221,75 @@ export function TaskCreationModal({ projectId, projectName, onClose }: TaskCreat
             <label htmlFor="labels" className="text-sm font-medium">
               Labels
             </label>
-            <input
-              id="labels"
-              type="text"
-              value={labels}
-              onChange={(e) => setLabels(e.target.value)}
-              placeholder="e.g., @timely, urgent, design (comma separated)"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+
+            {/* Selected Labels */}
+            <div className="flex flex-wrap gap-2 min-h-[44px] rounded-md border bg-background p-2">
+              {selectedLabels.map((label) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-sm"
+                >
+                  {label}
+                  <button
+                    onClick={() => removeLabel(label)}
+                    className="hover:text-destructive transition-colors"
+                    type="button"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+
+              {/* Input for adding labels */}
+              <input
+                ref={labelInputRef}
+                type="text"
+                value={labelInput}
+                onChange={(e) => setLabelInput(e.target.value)}
+                onFocus={() => setShowLabelDropdown(true)}
+                onKeyDown={handleLabelInputKeyDown}
+                placeholder={selectedLabels.length === 0 ? "Type to search or add labels..." : ""}
+                className="flex-1 min-w-[120px] outline-none bg-transparent text-sm"
+              />
+            </div>
+
+            {/* Dropdown with existing labels */}
+            {showLabelDropdown && (labelInput || filteredLabels.length > 0) && (
+              <div
+                ref={dropdownRef}
+                className="relative mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover shadow-lg"
+              >
+                {filteredLabels.length > 0 ? (
+                  <div className="py-1">
+                    {filteredLabels.map((label) => (
+                      <button
+                        key={label.id}
+                        onClick={() => addLabel(label.name)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2"
+                        type="button"
+                      >
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: label.color }}
+                        />
+                        {label.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : labelInput.trim() ? (
+                  <button
+                    onClick={() => addLabel(labelInput)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                    type="button"
+                  >
+                    <span className="text-muted-foreground">Create:</span> "{labelInput}"
+                  </button>
+                ) : null}
+              </div>
+            )}
+
             <p className="text-xs text-muted-foreground">
-              Separate multiple labels with commas. Use @timely, @strategy, or @putting-off for Kanban categories
+              Press Enter to add. Use @timely, @strategy, or @putting-off for Kanban categories
             </p>
           </div>
 

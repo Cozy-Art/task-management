@@ -39,19 +39,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f8fafc' }}>
       <div className="w-full max-w-md">
-        <div className="bg-card rounded-2xl shadow-xl p-8 border">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
           {/* Logo/Title */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">🚀 Task Management</h1>
-            <p className="text-muted-foreground">Enter password to continue</p>
+            <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">🚀 Task Management</h1>
+            <p className="text-gray-600 dark:text-gray-400">Enter password to continue</p>
           </div>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
+              <label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 Password
               </label>
               <input
@@ -60,22 +60,22 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
                 autoFocus
                 disabled={isLoading}
               />
             </div>
 
             {error && (
-              <div className="rounded-lg border border-destructive bg-destructive/10 p-3">
-                <p className="text-sm text-destructive">{error}</p>
+              <div className="rounded-lg border border-red-500 bg-red-50 dark:bg-red-900/20 p-3">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading || !password}
-              className="w-full min-h-[48px] rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full min-h-[48px] rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Priority & Time Management System
             </p>
           </div>

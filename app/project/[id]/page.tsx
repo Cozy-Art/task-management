@@ -5,12 +5,23 @@
  * Single-project Kanban view with task creation
  */
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 import { useTodoistTasks } from '@/lib/hooks/useTodoistTasks';
 import { Column } from '@/components/kanban/column';
 import { TaskCreationModal } from '@/components/kanban/task-creation-modal';
+import { TaskCard } from '@/components/kanban/task-card';
 import { TodoistTask } from '@/lib/types/todoist';
 import { TaskCategory } from '@/lib/types/app';
 
@@ -23,10 +34,92 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const { data: projects, isLoading: projectsLoading } = useTodoistProjects();
   const { data: allTasks, isLoading: tasksLoading } = useTodoistTasks({ projectId });
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTask, setActiveTask] = useState<TodoistTask | null>(null);
+  const [tasks, setTasks] = useState<TodoistTask[]>([]);
+
+  // Initialize tasks from API
+  useEffect(() => {
+    if (allTasks) {
+      setTasks(allTasks);
+    }
+  }, [allTasks]);
+
+  // Configure drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag
+      },
+    })
+  );
 
   // Find the current project and its sub-projects
   const project = projects?.find((p) => p.id === projectId);
   const subProjects = projects?.filter((p) => p.parent_id === projectId) || [];
+
+  // Drag handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const task = active.data.current?.task as TodoistTask;
+    if (task) {
+      setActiveTask(task);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    // Optional: Add visual feedback during drag
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    setActiveTask(null);
+
+    if (!over) return;
+
+    const task = active.data.current?.task as TodoistTask;
+
+    // Check if dropped on a column
+    const targetColumnType = over.data.current?.columnType;
+
+    if (targetColumnType && task) {
+      // Moved to a different column - update labels
+      const categoryLabels = ['@putting-off', '@strategy', '@timely'];
+      const newLabel = `@${targetColumnType}`;
+
+      // Remove all category labels and add the new one
+      const updatedLabels = [
+        ...task.labels.filter((label) => !categoryLabels.includes(label)),
+        newLabel,
+      ];
+
+      // Optimistically update UI
+      setTasks((tasks) =>
+        tasks.map((t) => (t.id === task.id ? { ...t, labels: updatedLabels } : t))
+      );
+
+      // Sync with Todoist
+      try {
+        const response = await fetch('/api/todoist/update-labels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            taskId: task.id,
+            labels: updatedLabels,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update labels');
+        }
+      } catch (error) {
+        console.error('Error updating labels:', error);
+        // Revert on error
+        setTasks((tasks) => tasks.map((t) => (t.id === task.id ? task : t)));
+        alert('Failed to update task labels. Please try again.');
+      }
+    }
+  };
 
   // Categorize tasks based on labels
   const categorizeTasks = (tasks: TodoistTask[]) => {
@@ -51,7 +144,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     return categorized;
   };
 
-  const categorizedTasks = categorizeTasks(allTasks || []);
+  const categorizedTasks = categorizeTasks(tasks);
 
   if (projectsLoading || tasksLoading) {
     return (
@@ -178,33 +271,52 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         </div>
 
         {/* Kanban Board */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Column
-            id={`${projectId}-putting-off`}
-            type="putting-off"
-            title="Putting Off"
-            tasks={categorizedTasks['putting-off']}
-            color="#ef4444" // red-500
-          />
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Column
+              id={`${projectId}-putting-off`}
+              type="putting-off"
+              title="Putting Off"
+              tasks={categorizedTasks['putting-off']}
+              color="#ef4444" // red-500
+              projectName={project.name}
+            />
 
-          <Column
-            id={`${projectId}-strategy`}
-            type="strategy"
-            title="Strategy"
-            tasks={categorizedTasks.strategy}
-            color="#3b82f6" // blue-500
-          />
+            <Column
+              id={`${projectId}-strategy`}
+              type="strategy"
+              title="Strategy"
+              tasks={categorizedTasks.strategy}
+              color="#3b82f6" // blue-500
+              projectName={project.name}
+            />
 
-          <Column
-            id={`${projectId}-timely`}
-            type="timely"
-            title="Timely"
-            tasks={categorizedTasks.timely}
-            color="#22c55e" // green-500
-          />
-        </div>
+            <Column
+              id={`${projectId}-timely`}
+              type="timely"
+              title="Timely"
+              tasks={categorizedTasks.timely}
+              color="#22c55e" // green-500
+              projectName={project.name}
+            />
+          </div>
 
-        {allTasks?.length === 0 && (
+          {/* Drag Overlay */}
+          <DragOverlay>
+            {activeTask ? (
+              <div className="rotate-3">
+                <TaskCard task={activeTask} isDragging />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        {tasks?.length === 0 && (
           <div className="text-center py-12 rounded-lg border border-dashed">
             <p className="text-muted-foreground mb-4">No tasks in this project yet.</p>
             <button

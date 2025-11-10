@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Insert the time entry
-    const { data, error } = await supabase
-      .from('time_entries')
+    const { data, error } = await (supabase
+      .from('time_entries') as any)
       .insert({
         user_id: userId,
         date,

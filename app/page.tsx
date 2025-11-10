@@ -1,15 +1,48 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTodoistProjects } from '@/lib/hooks/useTodoistProjects';
 import { getTodoistColor } from '@/lib/utils/colors';
 
 export default function Home() {
   const { data: projects, isLoading, error } = useTodoistProjects();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 md:p-24">
       <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm">
+        {/* Logout Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </div>
+
         <h1 className="text-4xl font-bold text-center mb-4">
           Priority & Time Management System
         </h1>

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { TodoistTask, TodoistProject } from '@/lib/types/todoist';
 import { Column, ColumnType } from './column';
 import { TaskCategory } from '@/lib/types/app';
+import { getTodoistColor } from '@/lib/utils/colors';
 
 interface ProjectRowProps {
   project: TodoistProject;
@@ -60,7 +61,7 @@ export function ProjectRow({ project, tasks, defaultExpanded = false, allocation
         className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors rounded-t-lg"
       >
         <div className="flex items-center gap-3">
-          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: project.color }} />
+          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: getTodoistColor(project.color) }} />
           <h2 className="text-2xl font-bold">{project.name}</h2>
           <span className="text-sm text-muted-foreground">({tasks.length} tasks)</span>
           {allocationPercentage !== undefined && (

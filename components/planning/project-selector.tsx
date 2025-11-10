@@ -5,6 +5,7 @@
 
 import { TodoistProject } from '@/lib/types/todoist';
 import { cn } from '@/lib/utils';
+import { getTodoistColor } from '@/lib/utils/colors';
 
 interface ProjectSelectorProps {
   projects: TodoistProject[];
@@ -54,7 +55,7 @@ export function ProjectSelector({
               <div className="flex items-center gap-3">
                 <div
                   className="h-4 w-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: project.color }}
+                  style={{ backgroundColor: getTodoistColor(project.color) }}
                   aria-hidden="true"
                 />
                 <div className="flex-1 min-w-0">
